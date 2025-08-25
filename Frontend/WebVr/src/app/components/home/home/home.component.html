@@ -1,0 +1,30 @@
+<a-scene id="network"  > 
+  
+  <a-assets>
+    
+    <a-asset-item id="computer-obj" src="assets/computer1.obj"></a-asset-item>
+    <a-asset-item id="computer-mtl" src="assets/computer3.mtl"></a-asset-item>
+    <a-asset-item id="TV-obj" src="assets/TV1.obj"></a-asset-item>
+    <a-asset-item id="TV-mtl" src="assets/TV3.mtl"></a-asset-item>
+    <a-asset-item id="puerta-obj" src="assets/puerta1.obj"></a-asset-item>
+    <a-asset-item id="puerta-mtl" src="assets/puerta3.mtl"></a-asset-item>
+
+  
+  </a-assets>
+
+<a-sky  id="entorno" src="assets/fondo1.jpg">
+
+</a-sky >
+    <a-camera  look-controls wasd-controls="fly:true" position="0 3 13" id="camara">
+      <a-entity 
+      cursor="fuse: false; fuseTimeout:100"
+      position="0 0 -1" 
+      geometry="primitive: ring;radiusInner: 0.01;  radiusOuter: 0.02 ; "
+      material="shader: flat">
+      </a-entity>
+    </a-camera> 
+
+
+    
+    
+  </a-scene>

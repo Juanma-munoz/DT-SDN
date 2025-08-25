@@ -1,0 +1,29 @@
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Numero del Switch</th>
+        <th>Identificador del Puerto</th>
+        <th>Numero del Puerto</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let switch of listSwitch">
+        <td>
+          {{ switch.switch_dpid }}
+        </td>
+        <ng-container *ngFor="let port of switch.Port; let i = index">
+          <tr>
+            <td>{{ port.dpid }}</td>
+            <td>{{ port.number }}</td>
+            <td>{{ port.status ? 'Up' : 'Down' }}</td>
+          </tr>
+        </ng-container>
+      </tr>
+    </tbody>
+  </table>
+
+ 
+ node.setAttribute('position', `${Math.floor(Math.random() * (switchNumber - (-switchNumber) + 1)) + (-switchNumber)} ${Math.floor(Math.random() * (switchNumber - (-switchNumber) + 1)) + (-switchNumber)}   0.1`);
+      

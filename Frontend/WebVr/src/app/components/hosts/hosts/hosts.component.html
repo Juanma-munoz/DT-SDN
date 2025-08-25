@@ -1,0 +1,27 @@
+<a-scene id="network"  physics="gravity:-9.8"> 
+    <a-assets>
+      
+      <a-asset-item id="computer-obj" src="assets/computer1.obj"></a-asset-item>
+      <a-asset-item id="computer-mtl" src="assets/computer3.mtl"></a-asset-item>
+    </a-assets>
+  
+  <a-sky color="grey" id="entorno">
+  
+  </a-sky>
+      <a-camera  look-controls wasd-controls="fly:true" position="0 3 13" id="camara">
+        <a-entity 
+        cursor="fuse: false; fuseTimeout:100"
+        position="0 0 -1" 
+        geometry="primitive: ring;radiusInner: 0.01;  radiusOuter: 0.02 ; "
+        material="shader: flat">
+        </a-entity>
+      </a-camera> 
+      <a-box>
+        <a-text value="h2"></a-text>
+      </a-box>
+      <a-obj-model src="#computer-obj" scale="0.01 0.01 0.01 "material="src:assets/computer.jpg">
+        <a-text value="h1"></a-text>
+
+      </a-obj-model>
+   
+    </a-scene>
