@@ -1,0 +1,252 @@
+
+    FUNCTION REPORTEKIRA (
+        P_OIDLABOR IN NUMBER
+    ) RETURN CLOB IS
+        v_json CLOB;
+    BEGIN
+        WITH 
+        DOCENCIA AS (
+            SELECT '{ "tipoActividad": "DOCENCIA", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"codigo": "' || d.MATERIA || '", ' ||
+                    '"materia": "' || d.NOMBREMATERIA || '", ' ||
+                    '"grupo": "' || d.GRUPO || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORASTEORICAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.NOMBREMATERIA)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                d.LABORACADEMICA labor
+            FROM labordocente.DOCENTEDOCENCIA d
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY d.LABORACADEMICA
+        ),
+        TRABAJOSINVESTIGACION AS (
+            SELECT '{ "tipoActividad": "TRABAJOS DE INVESTIGACION", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"actoAdministrativo": "' || LABORDOCENTE.PGKLABORDOCENTE.OBTENERACTOADMINISTRATIVO(d.ACTOADMIN, d.FECHAACTOADMIN, d.ORGANOEMISORACTO, d.ORGANOEMISORACTOOTROS) || '", ' ||
+                    '"estudiante": "' || d.ESTUDIANTE || '", ' ||
+                    '"nombreEstudiante": "' || d.NOMBREESTUDIANTE || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.ACTOADMIN)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                d.LABORACADEMICA labor
+            FROM labordocente.DOCENTETRABAJOSINVESTIGACION d
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY d.LABORACADEMICA
+        ),
+        TRABAJOSDOCENCIA AS (
+            SELECT '{ "tipoActividad": "TRABAJOS DOCENCIA", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"actoAdministrativo": "' || LABORDOCENTE.PGKLABORDOCENTE.OBTENERACTOADMINISTRATIVO(d.RESOLUCION, d.FECHAACTOADMIN, d.ORGANOEMISORACTO, d.ORGANOEMISORACTOOTROS) || '", ' ||
+                    '"idEstudiante": "' || D.ESTUDIANTE || '", ' ||
+                    '"username": "' || T.USUARIO || '", ' ||
+                    '"nombreEstudiante": "' || D.NOMBREESTUDIANTE|| '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.RESOLUCION)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                D.LABORACADEMICA labor  
+            FROM labordocente.DOCENTETRABAJOSDOCENCIA d
+            JOIN ACADEMICO.TERCEROS T ON D.ESTUDIANTE = T.IDENTIFICACION
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY D.LABORACADEMICA
+        ),
+        PROYECTOSINVESTIGACION AS (
+            SELECT '{ "tipoActividad": "PROYECTOS INVESTIGACIÓN", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"codigoVRI": "' || D.CODIGOVRI || '", ' ||
+                    '"nombreProyecto": "' || D.NOMBREPROYECTO || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.CODIGOVRI)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                D.LABORACADEMICA labor
+            FROM labordocente.DOCENTEINVESTIGACION d
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY D.LABORACADEMICA
+        ),
+        ADMINISTRACION AS (
+            SELECT '{ "tipoActividad": "ADMINISTRACIÓN", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"actoAdministrativo": "' || LABORDOCENTE.PGKLABORDOCENTE.OBTENERACTOADMINISTRATIVO(d.ACTOADMIN, d.FECHAACTOADMIN, d.ORGANOEMISORACTO, d.ORGANOEMISORACTOOTROS) || '", ' ||
+                    '"actividad": "' || a.DESCRIPCION || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.ACTOADMIN)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                D.LABORACADEMICA labor
+            FROM labordocente.DOCENTEADMINISTRACION d 
+            JOIN LABORDOCENTE.ACTIVIDADESADMIN a ON A.OID = D.ACTIVIDAD
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY D.LABORACADEMICA
+        ),
+        ASESORIA AS (
+            SELECT '{ "tipoActividad": "ASESORÍA", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"actoAdministrativo": "' || LABORDOCENTE.PGKLABORDOCENTE.OBTENERACTOADMINISTRATIVO(d.ACTOADMIN, d.FECHAACTOADMIN, d.ORGANOEMISORACTO, d.ORGANOEMISORACTOOTROS) || '", ' ||
+                    '"actividad": "' || a.DESCRIPCION || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.ACTOADMIN)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                D.LABORACADEMICA labor
+            FROM labordocente.DOCENTEASESORIA d
+            JOIN LABORDOCENTE.ACTIVIDADESASESORIA a ON d.ACTIVIDAD = a.oid
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY D.LABORACADEMICA
+        ),
+        OTROS AS (
+            SELECT '{ "tipoActividad": "OTROS SERVICIOS", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"actoAdministrativo": "' || LABORDOCENTE.PGKLABORDOCENTE.OBTENERACTOADMINISTRATIVO(d.RESOLUCION, d.FECHAACTOADMIN, d.ORGANOEMISORACTO, d.ORGANOEMISORACTOOTROS) || '", ' ||
+                    '"actividad": "' || d.DESCRIPCION || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.RESOLUCION)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                D.LABORACADEMICA labor
+            FROM LABORDOCENTE.DOCENTEOTROS d
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY D.LABORACADEMICA
+        ),
+        EXTENSION AS (
+            SELECT '{ "tipoActividad": "EXTENSIÓN", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"actoAdministrativo": "' || LABORDOCENTE.PGKLABORDOCENTE.OBTENERACTOADMINISTRATIVO(d.RESOLUCION, d.FECHAACTOADMIN, d.ORGANOEMISORACTO, d.ORGANOEMISORACTOOTROS) || '", ' ||
+                    '"actividad": "' || d.NOMBREPROYECTO || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.RESOLUCION)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                D.LABORACADEMICA labor
+            FROM LABORDOCENTE.DOCENTEEXTENSION d
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY D.LABORACADEMICA
+        ),
+        CAPACITACION AS (
+            SELECT '{ "tipoActividad": "CAPACITACIÓN", "detalles": [' || 
+                LISTAGG(
+                    '{' ||
+                    '"actoAdministrativo": "' || LABORDOCENTE.PGKLABORDOCENTE.OBTENERACTOADMINISTRATIVO(d.RESOLUCION, d.FECHAACTOADMIN, d.ORGANOEMISORACTO, d.ORGANOEMISORACTOOTROS) || '", ' ||
+                    '"actividad": "' || d.DESCRIPCION || '", ' ||
+                    '"semanas": ' || d.SEMANAS || ', ' ||
+                    '"horasSemanales": ' || d.HORAS ||
+                    '}', ','
+                ) WITHIN GROUP (ORDER BY d.RESOLUCION)
+                || '] }' AS JSON, 
+                NVL(SUM(D.TOTALHORAS), 0) horas,
+                D.LABORACADEMICA labor
+            FROM LABORDOCENTE.DOCENTECAPACITACION d
+            WHERE d.LABORACADEMICA = P_OIDLABOR
+            GROUP BY D.LABORACADEMICA
+        ),
+        PERIODO AS (
+            SELECT NVL(SUM(TOTALHORAS), 0) AS HORASESTIMULOS, P_OIDLABOR AS LABOR
+            FROM (
+                SELECT SUM(D.TOTALHORAS + D.TOTALHORASPRE) AS TOTALHORAS
+                FROM LABORDOCENTE.DOCENTEDOCENCIA D
+                WHERE D.LABORACADEMICA = P_OIDLABOR 
+                AND D.ESTIMULOS <> 0
+            UNION ALL
+                SELECT SUM(DA.TOTALHORAS) AS TOTALHORAS
+                FROM LABORDOCENTE.DOCENTEADMINISTRACION DA
+                WHERE DA.LABORACADEMICA = P_OIDLABOR 
+                AND DA.ESTIMULO <> 0
+            UNION ALL
+                SELECT SUM(DOCT.TOTALHORAS) AS TOTALHORAS
+                FROM LABORDOCENTE.DOCENTEOTROS DOCT
+                WHERE DOCT.LABORACADEMICA = P_OIDLABOR 
+                AND DOCT.ESTIMULO <> 0
+            )
+        ),
+        CORE AS (    
+            SELECT 
+                P_OIDLABOR AS LABOR, '"' || L.ANNIO || '-' || L.PERIODO || '"' AS PERIODO,
+                L.NOMBREFACULTAD FACULTAD, L.NOMBREDEPARTAMENTO DEPARTAMENTO, L.IDENTIFICACION,
+                TC.DESCRIPCION TIPOCONTRATACION, C.DESCRIPCION CATEGORIA,
+                D.PRIMERNOMBRE || ' ' || D.SEGUNDONOMBRE || ' ' || D.PRIMERAPELLIDO || ' ' || D.SEGUNDOAPELLIDO NOMBRES,
+                DT.DESCRIPCION DEDICACION, TE.DESCRIPCION ESTUDIOS, EP.DESCRIPCION ESTADO,
+                CASE WHEN ATE.USUARIO IS NULL THEN 'MISMATCH ID WITH TERCEROS'
+                    ELSE ATE.USUARIO||'@unicauca.edu.co'
+                END CORREO, COALESCE(ATE.USUARIO, 'MISMATCH ID WITH TERCEROS') USERNAME
+            FROM LABORDOCENTE.LABORACADEMICA L 
+            JOIN LABORDOCENTE.DOCENTES d ON L.OIDDOCENTE = D.OID
+            JOIN LABORDOCENTE.TIPOSCONTRATO TC ON TC.OID = L.TIPOCONTRATO 
+            JOIN LABORDOCENTE.CATEGORIAS C ON C.OID = L.CATEGORIA 
+            JOIN LABORDOCENTE.DEDICACIONES DT ON DT.OID = L.DEDICACION 
+            JOIN LABORDOCENTE.TIPOSESTUDIOS TE ON TE.OID = L.ESTUDIONIVEL 
+            JOIN LABORDOCENTE.ESTADOPROFESOR EP ON EP.OID = L.ESTADOPROFESOR 
+            LEFT JOIN ACADEMICO.TERCEROS ATE ON ATE.IDENTIFICACION = D.IDENTIFICACION 
+            WHERE L.OIDLABOR = P_OIDLABOR
+        ) 
+        SELECT 
+            '{ 	"informacionDocente": { ' ||
+                    '"facultad": "' || C.FACULTAD || '", ' ||
+                    '"departamento": "' || C.DEPARTAMENTO || '", ' ||
+                    '"identificacion": "' || C.IDENTIFICACION || '", ' ||
+                    '"tipoContratacion": "' || C.TIPOCONTRATACION || '", ' ||
+                    '"categoria": "' || C.CATEGORIA || '", ' ||
+                    '"nombreCompleto": "' || C.NOMBRES || '", ' ||
+                    '"dedicacion": "' || C.DEDICACION || '", ' ||
+                    '"nivelEstudios": "' || C.ESTUDIOS || '", ' ||
+                    '"estado": "' || C.ESTADO || '", ' ||
+                    '"correoInstitucional": "' || C.CORREO || '", ' ||
+                    '"username": "' || C.USERNAME || '"' ||
+                '}, ' ||
+                '"periodoAcademico": { ' ||
+                    '"periodo": ' || C.PERIODO || ', ' ||
+                    '"totalHoras": ' ||  CAST(NVL(C5.HORAS, 0) + NVL(C6.HORAS, 0) + NVL(C7.HORAS, 0) + NVL(C8.HORAS, 0) + NVL(C9.HORAS, 0) + NVL(C1.HORAS, 0) + NVL(C2.HORAS, 0) + NVL(C3.HORAS, 0) + NVL(C4.HORAS, 0) AS VARCHAR2(10)) || ', ' ||
+                    '"horasLabor": ' ||  CAST(NVL(C5.HORAS, 0) + NVL(C6.HORAS, 0) + NVL(C7.HORAS, 0) + NVL(C8.HORAS, 0) + NVL(C9.HORAS, 0)+ NVL(C1.HORAS, 0) + NVL(C2.HORAS, 0) + NVL(C3.HORAS, 0) + NVL(C4.HORAS, 0) - C0.HORASESTIMULOS AS VARCHAR2(10)) ||
+                '}, ' ||
+                '"actividades": [' || 
+                        COALESCE(C5.JSON, '{ "tipoActividad": "DOCENCIA", "detalles": [] }') || ',' ||
+                        COALESCE(C6.JSON, '{ "tipoActividad": "TRABAJOSINVESTIGACIÓN", "detalles": [] }') || ',' ||
+                        COALESCE(C7.JSON, '{ "tipoActividad": "TRABAJOS DOCENCIA", "detalles": [] }') || ',' ||
+                        COALESCE(C8.JSON, '{ "tipoActividad": "PROYECTOS INVESTIGACIÓN", "detalles": [] }') || ',' ||
+                        COALESCE(C9.JSON, '{ "tipoActividad": "ADMINISTRACIÓN", "detalles": [] }') || ',' ||
+                        COALESCE(C1.JSON, '{ "tipoActividad": "ASESORÍA", "detalles": [] }') || ',' || 
+                        COALESCE(C2.JSON, '{ "tipoActividad": "OTROS SERVICIOS", "detalles": [] }') || ',' ||
+                        COALESCE(C3.JSON, '{ "tipoActividad": "EXTENSIÓN", "detalles": [] }') || ',' ||
+                        COALESCE(C4.JSON, '{ "tipoActividad": "CAPACITACIÓN", "detalles": [] }') ||
+                ']}' AS JSON INTO v_json
+        FROM CORE C
+        LEFT JOIN PERIODO C0 ON C0.LABOR = C.LABOR
+        LEFT JOIN ASESORIA C1 ON C1.LABOR = C.LABOR
+        LEFT JOIN OTROS C2 ON C2.LABOR = C.LABOR
+        LEFT JOIN EXTENSION C3 ON C3.LABOR = C.LABOR
+        LEFT JOIN CAPACITACION C4 ON C4.LABOR = C.LABOR
+        LEFT JOIN DOCENCIA C5 ON C5.LABOR = C.LABOR
+        LEFT JOIN TRABAJOSINVESTIGACION C6 ON C6.LABOR = C.LABOR
+        LEFT JOIN TRABAJOSDOCENCIA C7 ON C7.LABOR = C.LABOR
+        LEFT JOIN PROYECTOSINVESTIGACION C8 ON C8.LABOR = C.LABOR
+        LEFT JOIN ADMINISTRACION C9 ON C9.LABOR = C.LABOR;
+
+        RETURN v_json;
+    END REPORTEKIRA;
+
+END PGKLABORDOCENTE;
